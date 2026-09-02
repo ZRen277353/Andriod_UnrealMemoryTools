@@ -26,6 +26,7 @@
 #include "UE/UEGameProfiles/AutoFix.hpp"
 #include "UE/UEGameProfiles/DeltaForce.hpp"
 #include "UE/UEGameProfiles/Farlight.hpp"
+#include "UE/UEGameProfiles/GMZZ.hpp"
 #include "UE/UEGameProfiles/NRC.hpp"
 #include "UE/UEGameProfiles/PUBGMHD.hpp"
 #include "UE/UEGameProfiles/PUBG.hpp"
@@ -44,6 +45,7 @@ std::vector<IGameProfile *> UE_Games = {
     new NRCProfile(),
     new PUBGMHDProfile(),
     new PUBGProfile(),
+    new GMZZProfile(),
 };
 
 #define kUEDUMPER_VERSION "1.0.0"
