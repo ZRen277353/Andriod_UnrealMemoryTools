@@ -1,0 +1,73 @@
+name: Build UnrealMemoryTools
+
+# 编译 Android arm64-v8a 版 UnrealMemoryTools (Vulkan overlay dumper)。
+# 产物流水线同本地 CMake: outputs/arm64-v8a/UnrealMemoryTools
+#
+# 触发方式:
+#   - push 到 main
+#   - 手动 (workflow_dispatch),可指定 NDK 版本
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      ndk_version:
+        description: >-
+          Android NDK 版本号(dl.google.com 上 android-ndk-<此值>-linux.zip)。
+          本机开发用 r29;CI 默认 r28c。
+        type: choice
+        required: false
+        default: r28c
+        options:
+          - r28c
+          - r27c
+          - r26d
+          - r25c
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+
+      # CMakeLists.txt 里 NDK 路径通过 -DNDK_PATH 注入(默认回退到本机 E:/ndk/...)。
+      # GitHub runner 不自带 NDK,从 Google 官方镜像下载解压。
+      - name: Download Android NDK
+        env:
+          NDK_VERSION: ${{ inputs.ndk_version || 'r28c' }}
+        run: |
+          set -euxo pipefail
+          curl -fL --retry 3 -o "${RUNNER_TEMP}/android-ndk.zip" \
+            "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip"
+          unzip -q "${RUNNER_TEMP}/android-ndk.zip" -d "${RUNNER_TEMP}/ndk"
+          echo "NDK_ROOT=${RUNNER_TEMP}/ndk/android-ndk-${NDK_VERSION}" >> "${GITHUB_ENV}"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DNDK_PATH="${NDK_ROOT}"
+
+      - name: Build
+        run: |
+          cmake --build build -j"$(nproc)"
+
+      - name: Verify output
+        run: |
+          ls -lh outputs/arm64-v8a/
+          file outputs/arm64-v8a/UnrealMemoryTools || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnrealMemoryTools-arm64-v8a
+          path: outputs/arm64-v8a/
+          if-no-files-found: error

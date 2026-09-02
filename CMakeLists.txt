@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
-set(NDK_PATH E:/ndk/android-ndk-r29)
+# NDK 路径：优先使用命令行 -DNDK_PATH=... 传入(CI/他人机器)，
+# 未传入时回退到本机默认路径。
+if(NOT NDK_PATH)
+    set(NDK_PATH E:/ndk/android-ndk-r29)
+endif()
 set(CMAKE_TOOLCHAIN_FILE ${NDK_PATH}/build/cmake/android.toolchain.cmake)
 set(CMAKE_SYSTEM_NAME Android)
 set(CMAKE_BUILD_TYPE Release)
